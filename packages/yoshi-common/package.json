@@ -31,7 +31,9 @@
     "@types/xmldoc": "1.1.4"
   },
   "dependencies": {
+    "@babel/core": "7.8.7",
     "@babel/register": "7.8.6",
+    "@babel/plugin-transform-typescript": "7.8.7",
     "@stylable/core": "1.4.0",
     "@stylable/jest": "1.4.0",
     "@stylable/node": "1.4.0",

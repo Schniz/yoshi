@@ -12,13 +12,14 @@ import {
   STATS_FILE,
   STATICS_DIR,
 } from 'yoshi-config/build/paths';
-import * as tscWorker from 'yoshi-common/build/tsc/tsc-worker';
 import { inTeamCity } from 'yoshi-helpers/build/queries';
 import fs from 'fs-extra';
-import { TypeError } from 'yoshi-common/build/tsc/tsc-process';
+import TscProcess, {
+  TypeError,
+} from 'yoshi-common/build/typescript/tsc-process';
+import runBabel from 'yoshi-common/build/typescript/runBabel';
 import { createClientWebpackConfig } from '../webpack.config';
 import { cliCommand } from '../cli';
-import buildCjs from '../buildCjs';
 
 const join = (...dirs: Array<string>) => path.join(process.cwd(), ...dirs);
 
@@ -80,8 +81,14 @@ const build: cliCommand = async function(argv, config) {
   }
 
   try {
-    // builds the ES bundle
-    await tscWorker.build();
+    // builds the ES directory
+    const tscProcess = new TscProcess({
+      outDir: path.join(BUILD_DIR, 'es'),
+      rootDir: 'src',
+    });
+
+    await tscProcess.build();
+
     console.log('');
     console.log('Found 0 type errors.');
     console.log('');
@@ -97,7 +104,7 @@ const build: cliCommand = async function(argv, config) {
   }
 
   // builds the cjs bundle without typecheck
-  buildCjs();
+  runBabel({ outDir: path.join(BUILD_DIR, 'cjs'), rootDir: 'src' });
 
   if (config.bundle) {
     const clientDebugConfig = createClientWebpackConfig(config, {

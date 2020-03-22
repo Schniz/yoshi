@@ -3,26 +3,34 @@ import fs from 'fs-extra';
 import defaultsDeep from 'lodash/defaultsDeep';
 import isEqual from 'lodash/isEqual';
 
-const enforcedTsconfigOptions = {
-  include: ['src'],
-  compilerOptions: {
-    target: 'ESNext',
-    module: 'esnext',
-    lib: ['dom', 'esnext'],
-    moduleResolution: 'node',
-    rootDir: 'src',
-    outDir: 'dist/es',
-    declarationDir: 'dist/types',
-    declaration: true,
-    sourceMap: true,
-    importHelpers: true,
-    esModuleInterop: true,
-    jsx: 'react',
-  },
-};
+export const enforceTsconfig = ({
+  outDir,
+  rootDir,
+  cwd,
+}: {
+  outDir: string;
+  rootDir: string;
+  cwd: string;
+}) => {
+  const enforcedTsconfigOptions = {
+    include: [rootDir],
+    compilerOptions: {
+      target: 'ESNext',
+      module: 'esnext',
+      lib: ['dom', 'esnext'],
+      moduleResolution: 'node',
+      rootDir,
+      outDir,
+      declarationDir: 'dist/types',
+      declaration: true,
+      sourceMap: true,
+      importHelpers: true,
+      esModuleInterop: true,
+      jsx: 'react',
+    },
+  };
 
-export const enforceTsconfig = () => {
-  const userTsconfigPath = path.join(process.cwd(), 'tsconfig.json');
+  const userTsconfigPath = path.join(cwd, 'tsconfig.json');
   const userTsconfig = fs.readJSONSync(userTsconfigPath);
   const mergedTsconfig = defaultsDeep(enforcedTsconfigOptions, userTsconfig);
 

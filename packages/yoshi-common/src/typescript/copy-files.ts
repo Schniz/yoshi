@@ -3,20 +3,20 @@ import globby from 'globby';
 import fs from 'fs-extra';
 import * as chokidar from 'chokidar';
 
-const ROOT_DIR = 'src';
-
 export default ({
-  cwd = process.cwd(),
   watch = false,
+  cwd,
   outDir,
+  rootDir,
 }: {
-  cwd?: string;
   watch?: boolean;
+  cwd: string;
   outDir: string;
+  rootDir: string;
 }) => {
   function getBuildAssetPath(assetPath: string) {
     const absolutOutDirPath = path.join(cwd, outDir);
-    return path.join(absolutOutDirPath, path.relative(ROOT_DIR, assetPath));
+    return path.join(absolutOutDirPath, path.relative(rootDir, assetPath));
   }
 
   function removeFromOutDir(assetPath: string) {
@@ -33,7 +33,7 @@ export default ({
     fs.copyFileSync(originAssetPath, buildAssetPath);
   }
 
-  const filesGlobPattern = path.join(ROOT_DIR, '**/*');
+  const filesGlobPattern = path.join(rootDir, '**/*');
   const ignoredFiles = ['**/*.js', '**/*.ts', '**/*.tsx', '**/*.json'];
 
   if (watch) {

@@ -3,20 +3,27 @@ import path from 'path';
 import * as babel from '@babel/core';
 import globby from 'globby';
 import fs from 'fs-extra';
-import { BUILD_DIR } from 'yoshi-config/build/paths';
-import copyFiles from 'yoshi-common/build/tsc/copy-files';
-
-const ROOT_DIR = 'src';
-const OUT_DIR = path.join(BUILD_DIR, 'cjs');
+import * as chokidar from 'chokidar';
+import copyFilesSync from './copy-files';
 
 const stripExtension = (filePath: string) => {
   return filePath.replace(path.extname(filePath), '');
 };
 
-function transpileFile(filePath: string) {
-  const abosoluteFilePath = path.join(process.cwd(), ROOT_DIR, filePath);
+function transpileFile({
+  filePath,
+  rootDir,
+  outDir,
+  cwd,
+}: {
+  filePath: string;
+  rootDir: string;
+  outDir: string;
+  cwd: string;
+}) {
+  const abosoluteFilePath = path.join(cwd, rootDir, filePath);
 
-  const filePathInBuildDir = path.join(process.cwd(), OUT_DIR, filePath);
+  const filePathInBuildDir = path.join(cwd, outDir, filePath);
 
   const content = fs.readFileSync(abosoluteFilePath, 'utf-8');
 
@@ -48,12 +55,41 @@ function transpileFile(filePath: string) {
   );
 }
 
-export default () => {
-  copyFiles({ watch: false, outDir: path.join(BUILD_DIR, 'cjs') });
+export default ({
+  watch = false,
+  copyFiles = true,
+  outDir,
+  rootDir,
+  cwd = process.cwd(),
+}: {
+  watch?: boolean;
+  copyFiles?: boolean;
+  outDir: string;
+  rootDir: string;
+  cwd?: string;
+}) => {
+  const tsFilesGlobPattern = ['**/*.js', '**/*.ts', '**/*.tsx', '**/*.json'];
+  const absoluteRootDir = path.join(cwd, rootDir);
 
-  const tsFiles = globby.sync(['**/*.js', '**/*.ts', '**/*.tsx', '**/*.json'], {
-    cwd: path.join(process.cwd(), ROOT_DIR),
+  const tsFiles = globby.sync(tsFilesGlobPattern, {
+    cwd: absoluteRootDir,
   });
 
-  tsFiles.forEach(transpileFile);
+  const _transpileFile = (filePath: string) =>
+    transpileFile({ filePath, rootDir, outDir, cwd });
+
+  tsFiles.forEach(_transpileFile);
+
+  if (copyFiles) {
+    copyFilesSync({ watch, outDir, rootDir, cwd });
+  }
+
+  if (watch) {
+    const watcher = chokidar.watch(tsFilesGlobPattern, {
+      cwd: absoluteRootDir,
+      ignoreInitial: true,
+    });
+
+    watcher.on('add', _transpileFile).on('change', _transpileFile);
+  }
 };
