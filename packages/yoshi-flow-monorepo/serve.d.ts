@@ -1,1 +1,2 @@
-export { default } from './build/serve.d';
+import serve from './build/serve.d';
+export = serve;
